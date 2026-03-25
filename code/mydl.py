@@ -413,8 +413,8 @@ class GeluUnit(SigmoidUnit):
         self.h = super().forward(1.702 * x)
         return self.x * self.h
     def backward(self, dy):
-        dx1 = dy * self.x
-        dh = dy * self.h
+        dh = dy * self.x
+        dx1 = dy * self.h
         dx2 = super().backward(dh) * 1.702
         return dx1 + dx2
 # ========================================================================================
@@ -476,8 +476,8 @@ class SumUnit(SimpleUnit):
         self.shape = x.shape
         return x.sum(axis=self.axis)
     def backward(self, dy):
-        def change_tuple(tuple, index, value):
-            return tuple[:index] + (value,) + tuple[index + 1:]
+        def change_tuple(tpl, index, value):
+            return tpl[:index] + (value,) + tpl[index + 1:]
         shape = change_tuple(self.shape, self.axis, 1)
         dy = dy.reshape(shape)
         dx = Math.broadcast_to(dy, self.shape)
@@ -489,8 +489,8 @@ class BroadcastUnit(SimpleUnit):
     def forward(self, x):
         # 输入x需携带要广播到什么形状
         x, self.shape = x
-        def change_tuple(tuple, index, value):
-            return tuple[:index] + (value,) + tuple[index + 1:]
+        def change_tuple(tpl, index, value):
+            return tpl[:index] + (value,) + tpl[index + 1:]
         # 先扩展出指定的轴(.., 1, ..)
         shape = change_tuple(self.shape, self.axis, 1)
         x = x.reshape(shape)
