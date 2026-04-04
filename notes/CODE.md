@@ -2335,3 +2335,154 @@ if False:
     print('convert "' + dataset.ids_2_str(question) + '" to "' + dataset.ids_2_str(answer) + '".')
 # ========================================================================================
 ```
+
+### 自然语言处理示例
+
+下面的示例是在阅读《深度学习进阶：自然语言处理》时整理的。
+
+**基于计数获取词向量**
+
+```python
+import numpy as np
+# 预处理文本为语料库
+def preprocess(text):
+    # 词编号列表
+    word_to_id = {}
+    id_to_word = {}
+    # 分词
+    words = text.lower().replace('.', ' .').replace(',', ' ,').split(' ')
+    # 填充列表
+    for word in words:
+        if word not in word_to_id:
+            new_id = len(word_to_id)
+            word_to_id[word] = new_id
+            id_to_word[new_id] = word
+    # 形成语料库
+    corpus = [word_to_id[word] for word in words]
+    return np.array(corpus), word_to_id, id_to_word
+# 创建共现矩阵
+def create_co_matrix(corpus, vocab_size, window_size=1):
+    corpus_size = len(corpus)
+    co_matrix = np.zeros((vocab_size, vocab_size), dtype=np.int32)
+    # 遍历所有词
+    for index, word_id in enumerate(corpus):
+        # 对所有的窗口统计
+        for i in range(1, window_size + 1):
+            left_idx = index - i
+            right_idx = index + i
+            if left_idx >= 0:
+                co_matrix[word_id, corpus[left_idx]] += 1
+            if right_idx < corpus_size:
+                co_matrix[word_id, corpus[right_idx]] += 1
+    return co_matrix
+# 将共现矩阵转换为PPMI
+def ppmi(co_matrix):
+    delta = 1e-8
+    ppmi = np.zeros_like(co_matrix, dtype=np.float32)
+    # 所有共现次数
+    total_count = np.sum(co_matrix)
+    # 每一个词的出现次数
+    word_count = np.sum(co_matrix, axis=0)
+    # 计算
+    for i in range(co_matrix.shape[0]):
+        for j in range(co_matrix.shape[1]):
+            pmi = np.log2(co_matrix[i, j] * total_count / (word_count[i] * word_count[j]) + delta)
+            ppmi[i, j] = max(0, pmi)
+    return ppmi
+# 两个词向量的余弦相似度
+def cos_similarity(x, y):
+    delta = 1e-8
+    nx = x / np.sqrt(np.sum(x**2) + delta)
+    ny = y / np.sqrt(np.sum(y**2) + delta)
+    return np.dot(nx, ny)
+# 给出最相似的词
+def most_similar(query, word_to_id, id_to_word, co_matrix, top=5):
+    if query not in word_to_id:
+        return
+    # 获取查询词的词向量
+    query_id = word_to_id[query]
+    query_vector = co_matrix[query_id]
+    # 计算所有词和查询词的相似度
+    vocab_size = len(id_to_word)
+    similarity = np.zeros(vocab_size)
+    for i in range(vocab_size):
+        similarity[i] = cos_similarity(query_vector, co_matrix[i])
+    # 降序输出
+    count = 0
+    sorted_index = np.flip(similarity.argsort())
+    for index in sorted_index:
+        if id_to_word[index] == query:
+            continue
+        print('%s %s' % (id_to_word[index], similarity[index]))
+        count += 1
+        if count >= top:
+            return
+# 奇异值分解降维，每个词两项只保留前size个特征
+def svd(co_matrix, size):
+    try:
+        from sklearn.utils.extmath import randomized_svd
+        U, S, V = randomized_svd(co_matrix, n_components=size, n_iter=5, random_state=None)
+        return U[:,:size]
+    except:
+        U, S, V = np.linalg.svd(co_matrix)
+        return U[:, :size]
+# 使用示例
+np.set_printoptions(precision=3)
+text = 'This is my family. There are four people in my family. They are my father, my mother, my brother and I. My father is a teacher. He teaches English in a school. My mother is a doctor. She works in a hospital. My brother is a student. He studies in a primary school. I am also a student. I study in the same school as my brother. We all love each other and we always help each other.'
+corpus, word_to_id, id_to_word = preprocess(text)
+co_matrix = create_co_matrix(corpus, len(word_to_id))
+co_matrix = ppmi(co_matrix)
+co_matrix = svd(co_matrix, 4)
+# 输出最相近的词
+most_similar('mother', word_to_id, id_to_word, co_matrix)
+```
+
+**CBOW模型**
+
+```
+import mydl
+import numpy as np
+class TextDataSet(mydl.DataSet):
+    def __init__(self):
+        super(TextDataSet, self).__init__()
+        corpus, word_to_id, id_to_word = preprocess(text)
+        vocab_size = len(word_to_id)
+        contexts, labels = self.create_contexts_labels(corpus)
+        contexts = self.convert_one_hot(contexts, vocab_size)
+        labels = self.convert_one_hot(labels, vocab_size)
+        self.size = vocab_size
+        self.samples = contexts
+        self.labels = labels
+    def create_contexts_labels(self, corpus, window_size=1):
+        labels = corpus[window_size:-window_size]
+        contexts = []
+        # 遍历每个词（窗口大小上的词没有上下文，因此边界去除）
+        for j in range(window_size, len(corpus) - window_size):
+            context = []
+            # 找到这个词的上下文
+            for i in range(-window_size, window_size + 1):
+                if i == 0:
+                    continue
+                context.append(corpus[j + i])
+            contexts.append(context)
+        return np.array(contexts), np.array(labels)
+    def convert_one_hot(self, corpus, vocab_size):
+        N = corpus.shape[0]
+        if corpus.ndim == 1:
+            one_hot = np.zeros((N, vocab_size), dtype=np.int32)
+            for idx, word_id in enumerate(corpus):
+                one_hot[idx, word_id] = 1
+        elif corpus.ndim == 2:
+            C = corpus.shape[1]
+            one_hot = np.zeros((N, C, vocab_size), dtype=np.int32)
+            for idx_0, word_ids in enumerate(corpus):
+                for idx_1, word_id in enumerate(word_ids):
+                    one_hot[idx_0, idx_1, word_id] = 1
+        return one_hot
+np.set_printoptions(precision=3)
+dataset = TextDataSet()
+dataloader = mydl.DataLoader(dataset, batch_size=3)
+network = mydl.CBOW(vocab_size=dataset.size, hidden_size=5)
+trainer = mydl.Trainer(network, dataloader, "sgd", lr=0.2)
+trainer.train(dataset.samples, dataset.labels, 200)
+```
