@@ -144,11 +144,11 @@ one-hot编码是一种稀疏编码表示。它虽然没有分布式表示的优�
 
 对体重和身高数据建模，并希望通过体重预测身高。令体重身高数据为$\{(w_1,t_1),(w_2,t_2),...\}$。
 
-若直接对条件概率建模，可令$\hat{t}=f(w)=2w$，$p(t|w)=N(t;t|w,σ^2)=\frac{1}{\sqrt{2π}σ}exp[-\frac{(t-\hat{t})^2}{2σ^2}]$，则模型为$$h(w)=\arg\max\limits_t\,p(t|w)=\arg\max\limits_t\,\frac{1}{\sqrt{2π}σ}exp[-\frac{(t-2w)^2}{2σ^2}]$$
+若直接对条件概率建模，可令$\hat{t}=f(w)=2w$，$p(t|w)=N(t;t|w,σ^2)=\frac{1}{\sqrt{2π}σ}\exp[-\frac{(t-\hat{t})^2}{2σ^2}]$，则模型为$$h(w)=\arg\max\limits_t\,p(t|w)=\arg\max\limits_t\,\frac{1}{\sqrt{2π}σ}\exp[-\frac{(t-2w)^2}{2σ^2}]$$
 
 向这个概率判别模型代入一个体重，即可得到一个身高分布，并且通常选择概率最大的身高作为预测值。而对于非概率判别模型来说，可以把它看做是对某个隐含概率模型中概率最大情时的点估计。另外，通常表达的“利用判别模型不能生成样本”的意思是，不能利用判别模型生成符合联合分布的样本。例如在上述问题中，通过条件概率$p(t|w)$只能根据一个具体的体重来生成身高，但是由于缺少对体重分布$p(w)$的建模，所以我们不能生成符合真实分布$p(t,w)$的学生样本（每个学生包含身高和体重）。即便利用$p(t|w)$通过遍历$w$的定义域生成了一系列$(t,w)$学生数据，但是它们的分布并不符合真实情况。
 
-如果对联合分布建模，可令$p(x)=N(x;μ,Σ)$，其中$x\,$=$\,\begin{bmatrix}{t}\\{w}\end{bmatrix},\,μ\,$=$\,\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix},\,Σ\,$=$\,\begin{bmatrix}σ_{tt}&σ_{tw}\\σ_{wt}&σ_{ww}\end{bmatrix}$，则模型为$$p(t,w)=\frac{1}{(2π)^{d/2}|Σ|^{1/2}}exp[-\frac{1}{2}(\begin{bmatrix}{t}\\{w}\end{bmatrix}-\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix})^T{\begin{bmatrix}σ_{tt}&σ_{tw}\\σ_{wt}&σ_{ww}\end{bmatrix}}^{-1}(\begin{bmatrix}{t}\\{w}\end{bmatrix}-\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix})]$$
+如果对联合分布建模，可令$p(x)=N(x;μ,Σ)$，其中$x\,$=$\,\begin{bmatrix}{t}\\{w}\end{bmatrix},\,μ\,$=$\,\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix},\,Σ\,$=$\,\begin{bmatrix}σ_{tt}&σ_{tw}\\σ_{wt}&σ_{ww}\end{bmatrix}$，则模型为$$p(t,w)=\frac{1}{(2π)^{d/2}|Σ|^{1/2}}\exp[-\frac{1}{2}(\begin{bmatrix}{t}\\{w}\end{bmatrix}-\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix})^T{\begin{bmatrix}σ_{tt}&σ_{tw}\\σ_{wt}&σ_{ww}\end{bmatrix}}^{-1}(\begin{bmatrix}{t}\\{w}\end{bmatrix}-\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix})]$$
 
 可见，给定一个体重数值，不同的身高取值有不同的概率，二者的相关信息由协方差来描述。通过联合分布可以生成符合真实分布样本，例如可以先通过对$w$边缘化$p(t)=\int\,p(t,w)dw$得到$p(t)$来采样一个身高，再计算$p(w|t)$采样得到体重。反之也可以先采样体重后采样身高，但无论谁先谁后，依赖$p(t)$或$p(w)$对初始维度的采样，都是仅依赖（条件）概率判别模型不能实现的。
 
@@ -156,7 +156,7 @@ one-hot编码是一种稀疏编码表示。它虽然没有分布式表示的优�
 
 $$\begin{align}
 h(w)&=\arg\max\limits_t\,p(t|w)=\arg\max\limits_t\frac{p(t,w)}{p(w)}=\arg\max\limits_t\frac{p(t,w)}{\int\,p(t,w)dt}∝\arg\max\limits_t\,p(t,w) \\
-&=\arg\max\limits_t\frac{1}{(2π)^{d/2}|Σ|^{1/2}}exp[-\frac{1}{2}(\begin{bmatrix}{t}\\{w}\end{bmatrix}-\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix})^T{\begin{bmatrix}σ_{tt}&σ_{tw}\\σ_{wt}&σ_{ww}\end{bmatrix}}^{-1}(\begin{bmatrix}{t}\\{w}\end{bmatrix}-\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix})]\end{align}$$
+&=\arg\max\limits_t\frac{1}{(2π)^{d/2}|Σ|^{1/2}}\exp[-\frac{1}{2}(\begin{bmatrix}{t}\\{w}\end{bmatrix}-\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix})^T{\begin{bmatrix}σ_{tt}&σ_{tw}\\σ_{wt}&σ_{ww}\end{bmatrix}}^{-1}(\begin{bmatrix}{t}\\{w}\end{bmatrix}-\begin{bmatrix}{μ_t}\\{μ_w}\end{bmatrix})]\end{align}$$
 
 **取值离散的示例**
 
@@ -273,7 +273,7 @@ h(w)&=\arg\max\limits_t\,p(t|w)=\arg\max\limits_t\frac{p(t,w)}{p(w)}=\arg\max\li
 
 **核密度估计**
 
-也称为Parzen窗，是对直方图方法的改进。令$d$维空间中的一个以$x$为中心的超立方体，定义核函数$Φ(x,z)$表示样本$z$落入其中的可能性，则点$x$的密度估计为$p(x)=\frac{1}{nh^d}\sum\limits_{i=1}^nΦ(z-x_i)$。其中，$h$是超立方体边长，$h^d$表示超立方体的体积。核函数既可以是指示函数$I(∀i,|z^{(i)}-x^{(i)}|<h/2)$，也可以是平滑的高斯核函数$\frac{1}{(2π)^{1/2}h}exp(-\frac{||z-x||^2}{2h^2})$。
+也称为Parzen窗，是对直方图方法的改进。令$d$维空间中的一个以$x$为中心的超立方体，定义核函数$Φ(x,z)$表示样本$z$落入其中的可能性，则点$x$的密度估计为$p(x)=\frac{1}{nh^d}\sum\limits_{i=1}^nΦ(z-x_i)$。其中，$h$是超立方体边长，$h^d$表示超立方体的体积。核函数既可以是指示函数$I(∀i,|z^{(i)}-x^{(i)}|<h/2)$，也可以是平滑的高斯核函数$\frac{1}{(2π)^{1/2}h}\exp(-\frac{||z-x||^2}{2h^2})$。
 
 ### 算法
 
@@ -333,7 +333,7 @@ h(w)&=\arg\max\limits_t\,p(t|w)=\arg\max\limits_t\frac{p(t,w)}{p(w)}=\arg\max\li
 
 ### 偏差与方差
 
-假设$y$是真实的标记，$f^*(x)$是理想的最优模型，那么真实标记和最优模型的差$ε=y-f^*(x)$表示噪声。再令$ε$的均值$\mathbb{E}(ε)=0$方差$\mathbb{D}(ε)=σ^2$。这样期望风险可以展开为$R(f)$=$\mathbb{E}_{(x,y)\sim{p_r(x,y)}}[y$-$f(x)]^2$=$\mathbb{E}_{(x,y)\sim{p_r(x,y)}}[(y$-$f^*(x))+(f^*(x)$-$f(x))]$=$\mathbb{E}_{x\sim{p_r(x)}}[(f(x)$-$f^*(x))^2]+\mathbb{E}_{(x,y)\sim{p_r(x,y)}}[(y$-$f^*(x))^2]$=$\mathbb{E}_{x\sim{p_r(x)}}[(f(x)$-$f^*(x))^2]+σ^2$。在实际训练中，令$f_D(x)$是在某一个数据集$D$下训练出的模型，$\bar{f}(x)=\mathbb{E}_D[f_D(x)]$是学习算法在多个不同数据集下训练出的模型平均。那么期望风险可以进一步展开为$R(f)$=$\mathbb{E}_{x\sim{p_r(x)}}[\mathbb{E}_D[(f_D(x)$-$f^*(x))^2]]+σ^2$=$\underbrace{\mathbb{E}_x[(\bar{f}(x)$-$f^*(x))^2]}_{bias^2}+\underbrace{\mathbb{E}_x[\mathbb{E}_D[(f_D(x)$-$\bar{f}(x))^2]]}_{var}+\underbrace{σ^2}_{noise}$。
+假设$y$是真实的标记，$f^*(x)$是理想的最优模型，那么真实标记和最优模型的差$ε=y-f^*(x)$表示噪声。再令$ε$的均值$\mathbb{E}(ε)=0$方差$\mathbb{D}(ε)=σ^2$。这样期望风险可以展开为$R(f)$=$\mathbb{E}_{(x,y)\sim{p_r(x,y)}}[y$-$f(x)]^2$=$\mathbb{E}_{(x,y)\sim{p_r(x,y)}}[(y$-$f^*(x))+(f^*(x)$-$f(x))]$=$\mathbb{E}_{x\sim{p_r(x)}}[(f(x)$-$f^*(x))^2]+\mathbb{E}_{(x,y)\sim{p_r(x,y)}}[(y$-$f^*(x))^2]$=$\mathbb{E}_{x\sim{p_r(x)}}[(f(x)$-$f^*(x))^2]+σ^2$。在实际训练中，令$f_D(x)$是在某一个数据集$D$下训练出的模型，$\bar{f}(x)=\mathbb{E}_D[f_D(x)]$是学习算法在多个不同数据集下训练出的模型平均。那么期望风险可以进一步展开为$R(f)=\mathbb{E}_{x\sim{p_r(x)}}[\mathbb{E}_D[(f_D(x)-f^*(x))^2]]+σ^2$=$\underbrace{\mathbb{E}_x[(\bar{f}(x)-f^*(x))^2]}_{bias^2}+\underbrace{\mathbb{E}_x[\mathbb{E}_D[(f_D(x)-\bar{f}(x))^2]]}_{var}+\underbrace{σ^2}_{noise}$。
 
 由此可见泛化误差可以分解为偏差、方差与噪声之和。偏差和方差从不同角度度量模型偏离真实情况的期望。其中，偏差衡量了模型的期望预测与真实结果的偏离程度，反映了模型的拟合能力；方差度量了模型对训练集变动的敏感程度，反映了模型是否容易过拟合；噪声表达了在当前任务上任何模型所能达到的期望泛化误差的下界。
 
@@ -617,7 +617,7 @@ PAC算法指可以在多项式时间内从数量$n(ε,δ)$的样本中，以至�
 
 ### 频率学派概率模型
 
-- 模型：构建判别式模型，将$y$视为受噪声干扰时服从高斯分布的随机变量$h: p(y|x;w,σ)=N(y;w^Tx,σ^2)=\frac{1}{\sqrt{2π}σ}exp[-\frac{(y-w^Tx)^2}{2σ^2}]$。
+- 模型：构建判别式模型，将$y$视为受噪声干扰时服从高斯分布的随机变量$h: p(y|x;w,σ)=N(y;w^Tx,σ^2)=\frac{1}{\sqrt{2π}σ}\exp[-\frac{(y-w^Tx)^2}{2σ^2}]$。
 - 策略：通过最大似然估计，构造负对数似然经验风险$R(w)=-\log{p(y|X;w,σ)}=-\sum_{i}\log{N(y_i;w^Tx_i,σ^2)}$。
 - 算法：可直接求出经验风险最小化时的解析解$w^*=(XX^T)^{-1}Xy$，该结果和非概率模型平方损失函数构造经验风险最小化的解相同。
 - 应用：$w$算出来之后，新样本带入$p(y|x;w^*,σ)$，此时$x$和$w^*$都是已知量，$p$是一个关于$y$的函数，求使得$p$最大时的$y^*$就是结果。
@@ -625,7 +625,7 @@ PAC算法指可以在多项式时间内从数量$n(ε,δ)$的样本中，以至�
 ### 贝叶斯学派概率模型
 
 - 思想：频率学派的概率模型缺点是当训练数据比较少时易发生过拟合。因此贝叶斯学派给参数加上先验知识，并认为参数不是固定值而是随机变量。对该问题，可令$w$服从各项同性，均值为0的高斯先验分布，即$p(w;δ)=N(0,δ^2I)$（此时把$w$看做随机向量）。根据贝叶斯公式，参数$w$的后验分布为$$p(w|D)=\frac{p(D|w)\,p(w)}{p(D)}∝p(y|X;w,σ)\,p(w;δ)=N(0,δ^2I)·\prod_{i}N(y_i;w^Tx_i,σ^2)$$其中$p(w)$为$w$的先验分布，$p(D|w)$为$w$的似然函数，$p(D)$是一个与$w$无关的常量。
-- 模型：$$\begin{align} h: & \ p(y|x;w,σ)_{y\sim{N(y;w^Tx,σ^2)}}·p(w;δ)_{w\sim{N(0,δ^2I)}} \\ & =\frac{1}{\sqrt{2π}σ}exp[-\frac{(y-w^Tx)^2}{2σ^2}]·\frac{1}{(2π)^{d/2}δ^{1/2}}exp[-\frac{1}{2}w^T(δI)^{-1}w]\end{align}$$
+- 模型：$$\begin{align} h: & \ p(y|x;w,σ)_{y\sim{N(y;w^Tx,σ^2)}}·p(w;δ)_{w\sim{N(0,δ^2I)}} \\ & =\frac{1}{\sqrt{2π}σ}\exp[-\frac{(y-w^Tx)^2}{2σ^2}]·\frac{1}{(2π)^{d/2}δ^{1/2}}\exp[-\frac{1}{2}w^T(δI)^{-1}w]\end{align}$$
 - 策略1：通过最大化后验估计，构造结构风险$$R(w)=-\log[p(y|X;w,σ)\,p(w;δ)]=-\sum_{i}\log{N(y_i;w^Tx_i,σ^2)}-\log{N(0,δ^2I)}$$该式等价于$\frac{1}{2σ^2}||y-X^Tw||^2+\frac{1}{2δ^2}w^Tw$(恰好和非概率模型平方损失函数构造的结构风险最小化一致)。
 - 算法1：可直接求出结构风险最小化时的解析解$w^*=(XX^T+\frac{σ^2}{δ^2}I)^{-1}Xy$。
 - 应用1：$w^*$算出来之后，将新样本带入$p(y|x;w^*,σ)\,p(w;δ)$，此时$x$和$w^*$都是已知量，$p$是一个关于$y$的函数，直接求使得$p$最大时的$y^*$即可。
@@ -856,14 +856,14 @@ $$VDM_p(a,b)=\sum\limits_{i=1}^c|\frac{\sum\limits_{x∈D_i}I(x^{(u)}=a)}{\sum\l
 
 ## Logistic回归
 
-- 思想：决策函数采用Logistic函数，记为$σ(w^Tx)=1/[1+exp(-w^Tx)]$，这里决策函数也可以称为激活函数。
+- 思想：决策函数采用Logistic函数，记为$σ(w^Tx)=1/[1+\exp(-w^Tx)]$，这里决策函数也可以称为激活函数。
 - 模型：$p(y=1|x)/p(y=0|x)=e^{w^Tx}$，其中$p(y=1|x)=σ(w^Tx)$、$p(y=0|x)=1-p(y=1|x)$。变换之后可以看出$w^Tx=\log[p(y=1|x)/p(y=0|x)]$，因此得名对数几率回归（但其实是分类模型）。
 - 策略：采用交叉熵损失函数，$R(w)=-\frac{1}{n}\sum\limits_{i=1}^n[p(y_i=1|x_i)·\log(σ(·))+p(y_i=0|x_i)·\log(1-σ(·))]$，进一步展开得$R(w)=-\frac{1}{n}\sum\limits_{i=1}^n[y_i·\log(σ(w^Tx_i))+(1-y_i)·\log(1-σ(w^Tx_i))]$。
 - 优化算法：梯度下降。
 
 ## Softmax回归
 
-- 思想：是Logistic模型在多分类上的推广（类别$j=1...c$），决策函数采用Softmax函数，记为$softmax(w_j^Tx)=exp(w_j^Tx)/\sum_{i=1}^c{exp(w_i^Tx)}$，本质是一种条件最大熵模型。
+- 思想：是Logistic模型在多分类上的推广（类别$j=1...c$），决策函数采用Softmax函数，记为$softmax(w_j^Tx)=\exp(w_j^Tx)/\sum_{i=1}^c{\exp(w_i^Tx)}$，本质是一种条件最大熵模型。
 - 模型：$y=\arg\max\limits_{j=1...c}p(y=j|x)$，其中$p(y=j|x)=softmax(w_j^Tx)$。
 - 策略：$R(w)=-\frac{1}{n}\sum\limits_{i=1}^n[y_i^T·\log(softmax(W^Tx_i))]$，其中$W=(w_1,...,w_c)$，$y_i$是one-hot向量。
 - 优化算法：梯度下降。
@@ -1108,8 +1108,8 @@ y  & x^{(1)} & x^{(2)} & x^{(1)}x^{(2)} & (x^{(1)})^2 & (x^{(2)})^2 \\
 *常见的核函数有*
 
 $$\begin{align}
-κ_{Gaussian RBF}(x,y)&=exp(-\frac{||x-y||^2}{σ^2}) \\
-κ_{Laplace}(x,y)&=exp(-\frac{||x-y||}{σ}) \\
+κ_{Gaussian RBF}(x,y)&=\exp(-\frac{||x-y||^2}{σ^2}) \\
+κ_{Laplace}(x,y)&=\exp(-\frac{||x-y||}{σ}) \\
 κ_{Polynomial}(x,y)&=(x^Ty+1)^k \\
 κ_{Sigmoidal}(x,y)&=tanh(α·x^Ty+θ) \\
 κ_{Inverse Multiquadric}(x,y)&=\frac{1}{\sqrt{||x-y||^2+c^2}}
@@ -1269,7 +1269,7 @@ CART使用基尼指数来进行划分，定义为$Gini(D)=\sum\limits_{i=1}^c\su
 
 ### Logistic回归
 
-Logistic回归得名于Logistic分布。随机变量$Y$服从Logistic分布$f(y)=e^{-y}/[1+exp(-y)]^2$，其分布函数为$P(y)=P\{Y≤y\}=σ(y)$。但Logistic回归仅借用了这个形式，并不假设$y$服从这一分布。
+Logistic回归得名于Logistic分布。随机变量$Y$服从Logistic分布$f(y)=e^{-y}/[1+\exp(-y)]^2$，其分布函数为$P(y)=P\{Y≤y\}=σ(y)$。但Logistic回归仅借用了这个形式，并不假设$y$服从这一分布。
 
 Logistic回归也可以从概率模型的角度理解，将其视为概率判别模型。它不对特征的分布做任何假设，而是直接使用$σ(·)$建模条件概率$p(y|x)$，并假设$p(y|x)$服从伯努利分布。因此最小化交叉熵损失等于最大化对数似然$\ell(w)=\frac{1}{n}\log\prod\limits_{i=1}^n[σ(w^Tx_i)^{y_i}·(1-σ(w^Tx_i))^{1-y_i}]\,$=$\,\frac{1}{n}\sum\limits_{i=1}^n[y_i·\log(σ(w^Tx_i))+(1-y_i)·\log(1-σ(w^Tx_i))]$。
 
@@ -1285,7 +1285,7 @@ Logistic回归可以推广到多分类。《统计机器学习》书中的公式
 
 原始的最大熵模型建模样本的联合分布，对于监督学习问题相当于建模$p(x,y)$，对于无监督学习问题相当于建模$p(x)$。
 
-以建模$p(x)$为例，假定通过经验或数据已经知道$p(x)$与$m$个约束有关。每个约束用某个特征函数$f_j(x)$在概率$p(x)$上的期望$\mathbb{E}_p(f_j)=\sum_\limits{x}p(x)f_j(x)$来表示。最大熵模型的目标是寻找在上述$c$个约束下，使得熵$\mathbb{H}(p)=-\sum_\limits{x}p(x)\log\,p(x)$最大的分布。通过拉格朗日乘数法求解这个带约束的优化问题，可得到的解$p_λ(x)=\widetilde{p}_λ(x)/Z(λ)=\widetilde{p}_λ(x)/\sum\limits_{x}\widetilde{p}_λ(x)$，其中$\widetilde{p}_λ(x)=exp(\sum\limits_{j=1}^{m}λ_jf_j(x))$。
+以建模$p(x)$为例，假定通过经验或数据已经知道$p(x)$与$m$个约束有关。每个约束用某个特征函数$f_j(x)$在概率$p(x)$上的期望$\mathbb{E}_p(f_j)=\sum_\limits{x}p(x)f_j(x)$来表示。最大熵模型的目标是寻找在上述$c$个约束下，使得熵$\mathbb{H}(p)=-\sum_\limits{x}p(x)\log\,p(x)$最大的分布。通过拉格朗日乘数法求解这个带约束的优化问题，可得到的解$p_λ(x)=\widetilde{p}_λ(x)/Z(λ)=\widetilde{p}_λ(x)/\sum\limits_{x}\widetilde{p}_λ(x)$，其中$\widetilde{p}_λ(x)=\exp(\sum\limits_{j=1}^{m}λ_jf_j(x))$。
 
 最大熵模型可以看做一类特殊的无向图概率模型，其最终得到解的形式就是基于势能函数的吉布斯分布。
 
@@ -1299,8 +1299,7 @@ s.t. & \quad \sum\limits_x\sum\limits_yp(y|x)p(x;D)f_j(x,y)=\sum\limits_x\sum\li
 & \quad \sum\limits_yp(y|x)=1
 \end{align}$$
 
-上式可以转换为无约束优化问题求解。引入拉格朗日乘子$λ^{(0)},λ^{(1)},...,λ^{(m)}$后，可定义关于$λ$和$p(y|x)$拉格朗日函数$L(λ,p)$，易知其为$p(y|x)$上的凸函数。令偏导等于0解得$p(y|x)=\frac{1}{Z(x)}\widetilde{p}(y|x)$，其中$
-Z(x)=\sum\limits_y\widetilde{p}(y|x)$，$\widetilde{p}(y|x)=\exp[\sum\limits_{j=1}^mλ^{(j)}f_j(x,y)]=exp(λ^Tf(x,y))$。通过对优化目标进行等式变换，可以得知其等价于对条件最大熵模型的极大似然估计。更一般的，还可以从类别的视角将模型写作$p(y_i|x;θ_i)=\frac{1}{Z}\widetilde{p}(y_i|x;θ_i)$，其中$Z=\sum\limits_i\widetilde{p}(y_i|x;θ_i)$，$\widetilde{p}(y_i|x;θ_i)=exp(θ_i^Tf(x,y_i))$。或者用$p_i(x;θ_i)$表示第$i$类样本的概率分布，从而写为$p_i(x;θ_i)=\widetilde{p}_i(x;θ_i)/\sum\limits_{j}\widetilde{p}_j(x;θ_j)$，$\widetilde{p}_i(x;θ_i)=exp(θ_i^Tf_i(x))$。并且，如果对于每个类别$i$和每个维度$j$，定义特征函数$f(x,y)$当$y=c_i$时为$x^{(j)}$、当$y≠c_i$时为0，就得到了Softmax回归的标准形式。
+上式可以转换为无约束优化问题求解。引入拉格朗日乘子$λ^{(0)},λ^{(1)},...,λ^{(m)}$后，可定义关于$λ$和$p(y|x)$拉格朗日函数$L(λ,p)$，易知其为$p(y|x)$上的凸函数。令偏导等于0解得$p(y|x)=\frac{1}{Z(x)}\widetilde{p}(y|x)$，其中$Z(x)=\sum\limits_y\widetilde{p}(y|x)$，$\widetilde{p}(y|x)=\exp[\sum\limits_{j=1}^mλ^{(j)}f_j(x,y)]=\exp(λ^Tf(x,y))$。通过对优化目标进行等式变换，可以得知其等价于对条件最大熵模型的极大似然估计。更一般的，还可以从类别的视角将模型写作$p(y_i|x;θ_i)=\frac{1}{Z}\widetilde{p}(y_i|x;θ_i)$，其中$Z=\sum\limits_i\widetilde{p}(y_i|x;θ_i)$，$\widetilde{p}(y_i|x;θ_i)=\exp(θ_i^Tf(x,y_i))$。或者用$p_i(x;θ_i)$表示第$i$类样本的概率分布，从而写为$p_i(x;θ_i)=\widetilde{p}_i(x;θ_i)/\sum\limits_{j}\widetilde{p}_j(x;θ_j)$，$\widetilde{p}_i(x;θ_i)=\exp(θ_i^Tf_i(x))$。并且，如果对于每个类别$i$和每个维度$j$，定义特征函数$f(x,y)$当$y=c_i$时为$x^{(j)}$、当$y≠c_i$时为0，就得到了Softmax回归的标准形式。
 
 ## 贝叶斯分类器
 
@@ -1349,7 +1348,7 @@ $$p(y_i|x)=\frac{p(x,y_i)}{p(x)}=\frac{p(x|y_i)\,p(y_i)}{p(x)}=\frac{p(x|y_i)\,p
 
 ### 高斯分布贝叶斯分类器
 
-单变量高斯分布为$p(x)=\frac{1}{\sqrt{2π}σ}exp[-\frac{(x-μ)^2}{2σ^2}]$，其中$μ$可由$\frac{1}{n}\sum\limits_{i=1}^{n}x_i$估计，$σ^2$可由$\frac{1}{n}\sum\limits_{i=1}^{n}(x_i-μ)^2$估计。多变量高斯分布为$p(x)=\frac{1}{(2π)^{\frac{d}{2}}|Σ|^{\frac{1}{2}}}exp[-\frac{1}{2}(x-μ)^TΣ^{-1}(x-μ)]$，其中$μ$可以由$\frac{1}{n}\sum\limits_{i=1}^{n}x_i$估计，$Σ$可以由$\frac{1}{n}\sum\limits_{i=1}^{n}(x_i-μ)(x_i-μ)^T$估计。
+单变量高斯分布为$p(x)=\frac{1}{\sqrt{2π}σ}\exp[-\frac{(x-μ)^2}{2σ^2}]$，其中$μ$可由$\frac{1}{n}\sum\limits_{i=1}^{n}x_i$估计，$σ^2$可由$\frac{1}{n}\sum\limits_{i=1}^{n}(x_i-μ)^2$估计。多变量高斯分布为$p(x)=\frac{1}{(2π)^{\frac{d}{2}}|Σ|^{\frac{1}{2}}}\exp[-\frac{1}{2}(x-μ)^TΣ^{-1}(x-μ)]$，其中$μ$可以由$\frac{1}{n}\sum\limits_{i=1}^{n}x_i$估计，$Σ$可以由$\frac{1}{n}\sum\limits_{i=1}^{n}(x_i-μ)(x_i-μ)^T$估计。
 
 若考虑类条件概率$p(x|y_i;θ_i)$服从高斯分布（$y_i;θ_i表示y_i由参数θ确定$），则代入后并取对数后可得$\ln{p(x|y_i;μ_i,Σ_i)}=-\frac{1}{2}(x-μ_i)^TΣ_i^{-1}(x-μ_i)-\frac{d}{2}\ln{2π}-\frac{1}{2}\ln|Σ_i|$。
 
@@ -1387,7 +1386,7 @@ $$p(y_i|x)=\frac{p(x,y_i)}{p(x)}=\frac{p(x|y_i)\,p(y_i)}{p(x)}=\frac{p(x|y_i)\,p
 
 对于取值为离散的数据，可令其在每个特征上服从多项分布。通过最大似然估计，先验概率和条件概率可以通过频率统计，分别按照$p(y_i)$=$\frac{1}{n}\sum\limits_{k=1}^nI(x_k∈y_i)$和$p(x^{(j)}=a_j|y_i)$=$\frac{\sum\limits_{k=1}^nI(x_k^{(j)}=a_j,x_k∈y_i)}{\sum\limits_{k=1}^nI(x_k∈y_i)}$计算。为了避免由于样本不足而导致概率为0，可以采用拉普拉斯平滑，其中先验概率和条件概率可以分别按照$p(y_i)$=$\frac{1}{n+cλ}[\sum\limits_{k=1}^nI(x_k∈y_i)+λ]$和$p(x^{(j)}=a_j|y_i)$=$\frac{\sum_{k=1}^nI(x_k^{(j)}=a_j,x_k∈y_i)+λ}{\sum\limits_{k=1}^nI(x_k∈y_i)+dλ}$计算。
 
-对于取值连续的数据，可假设似然函数服从各维特征之间的相互独立的高斯分布，得到$p(x|y_i;μ_i,Σ_i)=\prod\limits_{j=1}^{d}p(x^{(j)}|y_i;μ_i,Σ_i)=\prod\limits_{j=1}^{d}\frac{1}{\sqrt{2π}σ_{ij}}exp[-\frac{(x^{(j)}-μ_{ij})^2}{2σ_{ij}^2}]$。
+对于取值连续的数据，可假设似然函数服从各维特征之间的相互独立的高斯分布，得到$p(x|y_i;μ_i,Σ_i)=\prod\limits_{j=1}^{d}p(x^{(j)}|y_i;μ_i,Σ_i)=\prod\limits_{j=1}^{d}\frac{1}{\sqrt{2π}σ_{ij}}\exp[-\frac{(x^{(j)}-μ_{ij})^2}{2σ_{ij}^2}]$。
 
 **应用**
 
@@ -1523,7 +1522,7 @@ $$\begin{align}
 
 **基于能量的模型**
 
-由于势能函数必须为正，因此基于能量的模型定义$Φ_c(v_c)=exp(-E_c(v_c))$，其中$E_c(v_c)$称为能量函数。这就可将概率分布表示为$p(x)=\frac{1}{Z}\prod\limits_{c∈C}exp(-E_c(v_c))=\frac{1}{Z}exp(-\sum\limits_{c∈C}E_c(v_c))$，其中分配函数等于$\int_xexp(-\sum\limits_{c∈C}E_c(v_c))$（对于连续变量）或$\sum\limits_{x}exp(-\sum\limits_{c∈C}E_c(v_c))$（对于离散变量），负号是为了和物理学文献保持一致。这种能量的概率分布形式也称为玻尔兹曼分布，基于能量的模型称为广义的玻尔兹曼机。有些模型倾向于使用$-\log\widetilde{p}(x)$，并称为自由能。
+由于势能函数必须为正，因此基于能量的模型定义$Φ_c(v_c)=\exp(-E_c(v_c))$，其中$E_c(v_c)$称为能量函数。这就可将概率分布表示为$p(x)=\frac{1}{Z}\prod\limits_{c∈C}\exp(-E_c(v_c))=\frac{1}{Z}\exp(-\sum\limits_{c∈C}E_c(v_c))$，其中分配函数等于$\int_x\exp(-\sum\limits_{c∈C}E_c(v_c))$（对于连续变量）或$\sum\limits_{x}\exp(-\sum\limits_{c∈C}E_c(v_c))$（对于离散变量），负号是为了和物理学文献保持一致。这种能量的概率分布形式也称为玻尔兹曼分布，基于能量的模型称为广义的玻尔兹曼机。有些模型倾向于使用$-\log\widetilde{p}(x)$，并称为自由能。
 
 **因子图**
 
@@ -1561,7 +1560,7 @@ $$\begin{align}
 
 #### 不含隐变量的无向图学习
 
-对于一个样本，可以在最大团上分解为$\log\,p(x;Θ)\,$=$\,$-$\sum\limits_{c∈C}E_c(v_c)\,$-$\,\log[\sum\limits_{x}exp(\,$-$\,\sum\limits_{c∈C}E_c(v_c))]$。这里涉及到分配函数的计算，而直接计算边缘分布需要对高维随机变量求和或积分，因此通常需要借助采样等方法近似。
+对于一个样本，可以在最大团上分解为$\log\,p(x;Θ)\,$=$\,$-$\sum\limits_{c∈C}E_c(v_c)\,$-$\,\log[\sum\limits_{x}\exp(\,$-$\,\sum\limits_{c∈C}E_c(v_c))]$。这里涉及到分配函数的计算，而直接计算边缘分布需要对高维随机变量求和或积分，因此通常需要借助采样等方法近似。
 
 分配函数除了不易直接计算以外，另一个难点是它还依赖于参数。对数似然的梯度写为$\nabla_θ\log\,p(x;θ)=\nabla_θ\log\widetilde{p}(x;θ)-\nabla_θ\log\,Z$，这是著名的正相和负相分解。正相在没有隐变量（或者隐变量之间很少相关）的情况容易计算，而对于难于计算的负相可以采用变分推断等方法计算。
 
@@ -1741,9 +1740,9 @@ $$a_{ij}=\frac{\sum\limits_{t=1}^{τ-1}ξ_{t,ij}}{\sum\limits_{t=1}^{τ-1}γ_{t,
 
 ### 条件随机场
 
-条件随机场(CRF)是直接建模条件概率$p(y|x)$的无向图模型。它是一种给定观测值的马尔可夫随机场，每个变量都满足马尔科夫性，即$p(y_i|x,v_{\backslash{i}})=p(y_i|x,ν_i)$。条件概率可以通过最大团分解为$p(y|x)=\frac{1}{Z}exp(\sum\limits_{c∈C}θ_c^Tf_c(x,y_c))$，其中$Z=\sum\limits_yexp(\sum\limits_{c∈C}θ_c^Tf_c(x,y_c))$，$f_c$是特征函数（例如采用指示函数，当满足某个特征条件是取1，否则取0）。
+条件随机场(CRF)是直接建模条件概率$p(y|x)$的无向图模型。它是一种给定观测值的马尔可夫随机场，每个变量都满足马尔科夫性，即$p(y_i|x,v_{\backslash{i}})=p(y_i|x,ν_i)$。条件概率可以通过最大团分解为$p(y|x)=\frac{1}{Z}\exp(\sum\limits_{c∈C}θ_c^Tf_c(x,y_c))$，其中$Z=\sum\limits_y\exp(\sum\limits_{c∈C}θ_c^Tf_c(x,y_c))$，$f_c$是特征函数（例如采用指示函数，当满足某个特征条件是取1，否则取0）。
 
-一种常用的条件随机场是线性链条件随机场。输入$x$是随机变量，输出$y$是$d$维随机向量。在概率图中用结点$x$和$y_1,...,y_d$构成转移链。条件概率可以表示为$p(y|x;θ)=\frac{1}{Z}exp(\sum\limits_{i=1}^{d}θ_1^Tf_1(x,y_i)\,$+$\,\sum\limits_{i=1}^{d-1}θ_2^Tf_2(x,y_i,y_{i+1}))$。其中$f_1$是状态特征函数构成的向量，刻画观测序列对变量的影响；$f_2$为转移特征函数构成的向量，刻画相邻变量之间的关系以及观测序列对它们的影响。
+一种常用的条件随机场是线性链条件随机场。输入$x$是随机变量，输出$y$是$d$维随机向量。在概率图中用结点$x$和$y_1,...,y_d$构成转移链。条件概率可以表示为$p(y|x;θ)=\frac{1}{Z}\exp(\sum\limits_{i=1}^{d}θ_1^Tf_1(x,y_i)\,$+$\,\sum\limits_{i=1}^{d-1}θ_2^Tf_2(x,y_i,y_{i+1}))$。其中$f_1$是状态特征函数构成的向量，刻画观测序列对变量的影响；$f_2$为转移特征函数构成的向量，刻画相邻变量之间的关系以及观测序列对它们的影响。
 $f_1$和$f_2$的维度是一个超参数，视问题而定。$θ_1$和$θ_2$分别是对应的权重向量。
 
 从条件概率的形式上看出，线性链条件随机场也是一种对数对数线性模型。线性链条件随机场的学习主要通过最大似然估计。
