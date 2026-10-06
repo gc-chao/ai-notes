@@ -37,7 +37,7 @@
 - Srivastava, Nitish, et al. Dropout: a simple way to prevent neural networks from overfitting. The journal of machine learning research 15.1 (2014): 1929-1958.
 - Sutskever, Ilya, Oriol Vinyals, and Quoc V. Le. Sequence to sequence learning with neural networks. NIPS (2014).
 - Ioffe, Sergey, and Christian Szegedy. Batch normalization: Accelerating deep network training by reducing internal covariate shift. International conference on machine learning. pmlr, 2015.
-- Kingma, Diederik P., and Jimmy Ba. "Adam: A method for stochastic optimization." ICLR 2015.
+- Kingma, Diederik P., and Jimmy Ba. Adam: A method for stochastic optimization. ICLR 2015.
 - Ronneberger O, Fischer P, Brox T. U-Net: Convolutional Networks for Biomedical Image Segmentation[C]. MICCAI, 2015.
 - He K, Zhang X, Ren S, et al. Deep Residual Learning for Image Recognition[C]. CVPR, 2016.
 - Vaswani A, Shazeer N, Parmar N, et al. Attention Is All You Need[C]. NIPS, 2017.
@@ -47,12 +47,14 @@
 - Radford, Alec, et al. Language models are unsupervised multitask learners. OpenAI blog 1.8 (2019): 9.
 - Kaplan, Jared, et al. Scaling laws for neural language models. OpenAI. 2020.
 - Brown, Tom, et al. Language models are few-shot learners. NeurIPS 2020.
+- Guu, Kelvin, et al. Retrieval augmented language model pre-training. ICML, 2020.
 - Lewis, Patrick, et al. Retrieval-augmented generation for knowledge-intensive nlp tasks. NeurIPS 2020.
+- Elhage, Nelson, et al. A mathematical framework for transformer circuits. Transformer Circuits Thread 1.1 (2021): 12.
 - Radford, Alec, et al. Learning transferable visual models from natural language supervision. ICML, 2021.
 - Hoffmann, Jordan, et al. Training compute-optimal large language models. arXiv preprint arXiv:2203.15556 (2022).
 - Ouyang, Long, et al. Training language models to follow instructions with human feedback. NeurIPS 2022.
 - Wei, Jason, et al. Chain-of-thought prompting elicits reasoning in large language models. NeurIPS 2022.
-- Touvron, Hugo, et al. LLaMA: Open and efficient foundation language models (arXiv: 2302.13971). arXiv. 2023,
+- Touvron, Hugo, et al. LLaMA: Open and efficient foundation language models (arXiv: 2302.13971). arXiv. 2023.
 
 ## 著名数据集
 
@@ -416,6 +418,8 @@ GPT-3的局限性包括：文本生成存在重复、不连贯、自相矛盾等
 
 ### 概述
 
+#### 发展脉络
+
 **从统计语言模型到神经语言模型**
 
 语言模型的目标是对自然语言的概率分布建模。由于在词汇表上直接计算词序列$p(w_1,w_2,..,w_M)$的联合分布非常困难，因此语言模型通常使用链式法则将其分解为条件概率之积$p(w_1,w_2,...,w_M)=\prod_{i=1}^Mp(w_i|w_1,w_2,...,w_{i-1})$，以便以逐词生成的角度来实现建模。虽然这种分解方式简化了建模，但参数量仍巨大，实现上不具备可行性。为此，随后的思想是假设词$w_i$出现的概率只和过去的$N-1$个词有关$p(w_i|w_1,w_2,...,w_{i-1})=p(w_i|w_{i-(N-1)},w_{i-(N-2)},...,w_{i-1})$，这便是n-gram模型。进一步的，为了避免零概率问题（语料库中某个n-gram出现的频率可能为零，但并不代表其实际概率为零），统计语言模型采用平滑(smoothing)方法来缓解，其思想是在整体上提高低概率（频率为零的n-gram也会分配一个非零概率值）、降低高概率。然而，统计语言模型(SLM)仍只能利用固定长度的上下文，无法建模长距离依赖。随着$N$的增大，参数空间随之膨胀，难以从稀疏数据中得到可靠的参数估计，只能依赖人工设计的平滑方法来缓解。随后，基于RNN和CNN等神经网络的神经语言模型(NLM)逐步发展。它们不仅能更好地建模长距离依赖，还能借助词嵌入方法有效地表示同义词等语义关系（让语义相近的词在向量空间中彼此接近）。
@@ -424,7 +428,11 @@ GPT-3的局限性包括：文本生成存在重复、不连贯、自相矛盾等
 
 最初的神经语言模型多针对特定任务并采用有监督的方式进行训练，但人工标注成本过高。随着BERT、GPT等基于Transformer架构的预训练语言模型(PLM)出现，基于大规模语料库的无监督预训练范式逐渐普及，语言模型以此可通过自监督的方式学习通用表示，并通过微调适配到下游任务上。最具代表性的是参数量为1750亿的GPT-3，它可被视为进入大规模语言模型的里程碑。而2022年ChatGPT产品的发布，则将大语言模型的研究与应用推向了新的高点。当下，以大规模语料库预训练为基础，结合指令微调和基于人类反馈的强化学习(RLHF)对齐，构成了现代大规模语言模型的训练范式。
 
-**构建流程**
+#### 基本结构
+
+大部分大语言模型的网络结构和GPT-3相近，通常基于Transformer解码器结构，并采用自回归的方式进行语言建模。
+
+#### 构建流程
 
 参考工业实践，大规模语言模型的构建通常分为四个阶段，分别是预训练、指令微调、奖励建模和强化学习。
 
@@ -436,15 +444,17 @@ GPT-3的局限性包括：文本生成存在重复、不连贯、自相矛盾等
 
 强化学习阶段利用RM模型提供的奖励评分，在SFT模型的基础上调整参数，使得模型输出的文本可以获得更高的奖励。这一阶段形成的模型，基本上就是最终面向用户的大模型产品中核心对话能力的模型了。
 
-### 理论基础
+#### 理论基础
 
-**Scaling Laws (2020)**
+**规模扩展定律**
 
-Kaplan et al., 2020的缩放定律表明，模型性能（通常用交叉熵损失衡量）与模型参数量$N$、训练数据量$D$、训练算力$C$之间呈幂律关系。当另外两个因素不构成瓶颈时，三者中任意一个增大，损失都会可预测地下降，且在双对数坐标下呈线性关系。其结论偏向优先增大模型，而不是等比例扩大数据。
+Kaplan et al., 2020的规模扩展定律*Scaling Laws*表明，模型性能（通常用交叉熵损失衡量）与模型参数量$N$、训练数据量$D$、训练算力$C$之间呈幂律关系。当另外两个因素不构成瓶颈时，三者中任意一个增大，损失都会可预测地下降，且在双对数坐标下呈线性关系。其结论偏向优先增大模型，而不是等比例扩大数据。
 
-**Training Compute-optimal LLM (2022)**
+Hoffmann et al., 2022的论文*Training Compute-optimal LLM*（即Chinchilla）对规模扩展定律进行了进一步研究和修正，其表明在给定算力预算下，模型参数量和训练数据量应等比例扩展。适度缩小模型并扩大训练数据量，能带来更高的性价比。
 
-Hoffmann et al., 2022对缩放定律进行了进一步研究和修正，其表明在给定算力预算下，模型参数量和训练数据量应等比例扩展。适度缩小模型并扩大训练数据量，能带来更高的性价比。
+**机制可解释性**
+
+Elhage et al. (2021)的论文*Transformer Circuits*是Transformer架构神经语言模型方面机制可解释性领域的奠基工作。作者的研究动机是探索能否像程序员逆向二进制一样，把Transformer的计算过程还原成人类可以理解的”源代码“，从而更好的解释和预测模型的行为，服务于AI安全。论文从一个玩具Transformer结构开始，这个结构仅含注意力而不包括MLP部分并忽略归一化层和偏置。这样，可以把Transformer的工作化简为：词元$t$、嵌入$x_0=W_Et$、依次通过$N$个注意力层（假设每层$M$个注意力头）做计算$x_{i+1}=x_i+[H_1;...;H_j;...;H_M]·W_O=x_i+[...;SelfAtt(Q_i^{(j)},K_i^{(j)},V_i^{(j)});...]·W_O$，最后通过反嵌入$T(t)=W_Ux_N$得到logits。数学上，将注意力计算中的$W_O$乘入原式则可以等价的写成$x_{i+1}=x_i+\sum_{j=1}^Mh_j(x_i)=x_i+\sum_{j=1}^MW_O^{(j)}·SelfAtt(Q_i^{(j)},K_i^{(j)},V_i^{(j)})$，并且引入$W_{QK}$和$W_{OV}$可以将自注意力的计算简化为$W_O·SelfAtt(Q,K,V)=W_O·softmax(\frac{W_Qx_q·(W_Kx_k)^T}{\sqrt{D_K}})·(W_Vx_k)=softmax(x_q^TW_{QK}x_k)·W_{OV}x_k$。进一步观察可知，这些注意力层都是残差结构（原始信号加注意力激活值），因此可视为展开形式$x_N=x_0+\sum_jh_j^{(1)}(x_0)+...+\sum_jh_j^{(N)}(x_{N-1})$，每个注意力头$h_j$对$x_{i+1}$来说都仅贡献自己低维子空间里的信息（但每个子空间之间可能重叠），而不是写满整个$x_{i+1}$向量的空间。以此，作者引入了如下概念：残差流（对应每一层的$x_i$向量）表示各层输出相加的通信通道、虚拟权重用于表示任意两层的隐式权重（因为残差流是线性的，相当于各层的权重可以”乘穿“）从而描述后一层在多大程度上读入了前一层写入的信息，子空间表示构成残差流的低维空间，带宽表示残差流的维度大小，QK电路（对应$W_{QK}=W_Q^TW_K$）计算注意力模式，OV电路（对应$W_{OV}=W_OW_V$）计算每个词元在被关注时如何影响输出。随后作者通过三种对Transformer的简化模型来阐述其解释能力。零层模型即只有词嵌入和反嵌入，可表达为$T(t)=W_U·x_0=W_U·W_Et$，因为没有注意力层，每个位置的$x_0$只能由自身的$t$决定而无法读取其他位置信息，所以模型只能根据当前词元预测下一个词元，本质上就是一个bigram查表（通过A预测B）。一层模型在零层的基础上增加了一个注意力层，可表达为$T(t)=W_u·x_1=W_U·[x_0+\sum_{j=1}^MW_O^{(j)}·SelfAtt(Q_0^{(j)},K_0^{(j)},V_0^{(j)})]$，由于有了注意力层，每个位置可以从其他位置读取信息，因此模型可以做更复杂的预测，并且作者发现一层模型可以还原成bigram加上一系列skip-trigram的形式（每个时刻都有机会从之前的历史时刻读取信息，即通过A...B预测C），因为每个注意力头独立的产生一个完整的注意力分布，所以注意力头之间可以并行读取不同的模式，再把结果相加。两层模型则是在一层模型的基础上再加一个注意力层，由于第一层的注意力头已经将信息写入残差流$x_1$，第二层做注意力计算时，就可以读取到第一层已经写入的内容。这使得模型能在当前上下文中，找到曾经出现过的相同词元，并复制其后面的词元（即通过AB....A预测B，注意此时预测B是因为检索到了上一次之前出现了A而且后跟着B）。这种能力必须依赖至少两层注意力层才能实现，因此在第一层之后用于查找上一次相同词元并复制后续词元的注意力头也称为归纳头。归纳头相当于可以在上下文中进行检索，这对于语言模型来说至关重要，特别是它在小模型上解释了上下文学习(ICL)能力的实现。
 
 ### InstructGPT
 
@@ -474,7 +484,7 @@ RL步骤采用一个bandit（一步定胜负，即只在整个输出完成后给
 
 LLaMA是Meta于2023年面向社区发布的大语言模型，它有从7B到65B大小的多个版本。
 
-在LLaMA的论文中，作者这样引出研究背景和动机。Scaling Laws (2020)揭示了提升模型容量、数据量和训练时间能增强大语言模型的性能。随后，Hoffmann (2022)等人对缩放定律的进一步研究表明，在给定的训练算力预算时，适度缩小模型并扩大训练数据量，能带来更高的性价比。但是，这一目标仍然忽略了推理的预算，而大规模语言模型部署时，推理的预算更重要。在这一前提下，推理最快的模型理应是更优的模型。一个大模型和一个小模型如果其训练后的最终性能相近，那么训练阶段大模型成本更低（所需数据少，训练时间短），推理阶段小模型更经济（尽管参数量小需要更大数据去训练，但也正因为参数量小，每次推理消耗的算力更小）。
+在LLaMA的论文中，作者这样引出研究背景和动机。Scaling Laws (2020)揭示了提升模型容量、数据量和训练时间能增强大语言模型的性能。随后，Hoffmann (2022)等人对规模扩展定律的进一步研究表明，在给定的训练算力预算时，适度缩小模型并扩大训练数据量，能带来更高的性价比。但是，这一目标仍然忽略了推理的预算，而大规模语言模型部署时，推理的预算更重要。在这一前提下，推理最快的模型理应是更优的模型。一个大模型和一个小模型如果其训练后的最终性能相近，那么训练阶段大模型成本更低（所需数据少，训练时间短），推理阶段小模型更经济（尽管参数量小需要更大数据去训练，但也正因为参数量小，每次推理消耗的算力更小）。
 
 因此，作者提出了LLaMA。它用相比GPT-3小得多的参数量、大得多的数据量，在多个基准测试上达到媲美甚至超越GPT-3的性能。其中LLaMA-13B的规模仅是GPT-3的10%，却能在大多数基准测试上超越后者，这种小规模模型使得在单张GPU上运行变得可行。另外650亿参数的版本甚至可以与Chinchilla和PaLM-540B等最先进的大语言模型媲美。并且，LLaMA仅使用公开数据训练。
 
@@ -494,16 +504,17 @@ LLaMA同时包含了在偏见和毒性上的评估，结果表明其整体略优
 
 预训练阶段需要让模型在海量、广泛、高质量的数据上进行学习。按领域来源可以分为通用数据和领域数据两类。通用数据是预训练数据中占比较高的部分，通常包括网页、对话文本、书籍、多语言文本、科学文献、百科和代码等。若模型需要应用于金融、医疗、法律等某一专用领域，还可以在领域数据集上对模型进行增量训练。一些典型的数据集包括：
 
-- Common Crawl：Common Crawl是一个非营利组织，其构建并维护一个开放、免费的网页抓取数据集。包括原始网页内容(WARC)、网页元数据(WAT)和纯文本提取(WET)，每个月都在更新。GPT-3的预训练数据涵盖了Common Crawl（原始数十TB数据经过滤后保留了570GB的版本）。
-- Pile：由多个子集构成的多样性大规模文本数据集，包括网页、书籍、代码、学术、对话等数据在内的800多GB数据。
-- Books3：由开源社区构建，约37GB、近20万本书，但曾存在版权争议。
-- ROOTS：是BigScience项目构建的数据集，包含46种自然语言和13中编程语言共约1.6TB的数据。ROOTS数据已经进行了冗余去除和隐私消除。
+- Common Crawl[2008-]：Common Crawl是一个非营利组织，其构建并维护一个开放、免费的网页抓取数据集。包括原始网页内容(WARC)、网页元数据(WAT)和纯文本提取(WET)，每个月都在更新。GPT-3的预训练数据涵盖了Common Crawl（原始数十TB数据经过滤后保留了570GB的版本）。
+- Books3 [2020]：由开源社区构建，约37GB、近20万本书，但曾存在版权争议。
+- Pile [2020]：由多个子集构成的多样性大规模文本数据集，包括网页、书籍、代码、学术、对话等数据在内的800多GB数据。
+- ROOTS [2022]：是BigScience项目构建的数据集，包含46种自然语言和13中编程语言共约1.6TB的数据。ROOTS数据已经进行了冗余去除和隐私消除。
+- RefinedWeb [2023]：基于Common Crawl进一步清洗、去重、过滤后（大约在原始数据中保留了约11.67%的内容）得到5万亿词元规模的高质量网页数据集。其数据处理上的方法对工业实践有较大影响，并侧面印证了仅依赖单一来源的高质量数据也能训练大规模语言模型。
 
 **数据处理**
 
-原始数据通常需要经过质量过滤、冗余去除、隐私消除、词元划分几个阶段才成为训练数据。
+原始数据通常需要经过质量过滤、冗余去除、隐私消除、词元划分几个阶段才成为训练数据。例如，Penedo et al., 2023在RefinedWeb的原始论文中详细描述了其数据处理过程，该论文是工业界构建预训练语料库的经典参考。
 
-训练数据的质量对大语言模型来说至关重要，质量过滤用于在训练数据中删除低质量数据。其方法主要分为两类，基于分类器的方法通过训练一个质量评价模型来实现过滤，基于启发式的方法则利用设计的规则来实现过滤。在具体场景中，也可以将二者结合起来。
+训练数据的质量对大语言模型来说至关重要，质量过滤用于在训练数据中删除低质量数据。其方法主要分为两类，基于分类器的方法通过训练一个质量评价模型来实现过滤，基于启发式的方法则利用设计的规则来实现过滤。在具体场景中，也可以将二者结合起来。另外，对于有害URL在这一阶段也会基于黑名单的规则等方法去除。
 
 语料库中的句子如果包含重复单词或短语可能会引起语言建模异常，最终导致在生成时陷入重复循环。重复的文档甚至是重复的子数据集也会对模型训练产生负面作用。而从大模型训练数据中去除重复数据可以保持模型的多样性，并利于训练稳定。这属于NLP中的经典去重问题，其中文本近似重复检测是典型任务。例如，LLaMA采用CCNet的处理方式，先将文档拆分为段落，同时把字母转换为小写、数字替换为占位符、删除Unicode标点符号和重音符号，并作NFKC规范化处理。还会使用SHA-1算法对每个段落生成一个信息摘要，以此作为重复判断依据。
 
@@ -612,6 +623,12 @@ SFT和RL模型可以使用通用的MMLU、AGI-EVAL、C-EVAL等基准数据集，
 #### 效率优化
 
 大规模语言模型需要大量的计算和存储资源，以及对电力和能源的消耗，因此在保证模型性能的前提下进行优化已经成为重要课题。有诸多研究分别在模型结构、模型训练和模型推理上提出了具体方法。
+
+**模型结构优化**
+
+**训练优化**
+
+**推理优化**
 
 #### 开发
 
